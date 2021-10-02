@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using Npc.MonoBehaviourScripts;
 using Npc.Parts;
@@ -14,6 +15,10 @@ namespace RoboPhredDev.PotionCraft.BringMoreDamnit
     [BepInPlugin("net.robophreddev.PotionCraft.BringMoreDamnit", "Bring more ingredients!", "1.0.0.0")]
     public class BringMoreDamnitPlugin : BaseUnityPlugin
     {
+        private ConfigEntry<int> configdeliveryMinCount;
+        private ConfigEntry<int> configdeliveryMaxCount;
+        private ConfigEntry<float> configdeliveryAppearingChance;
+
         public static string AssemblyDirectory
         {
             get
@@ -26,6 +31,12 @@ namespace RoboPhredDev.PotionCraft.BringMoreDamnit
         void Awake()
         {
             UnityEngine.Debug.Log($"[BringMoreDamnit]: Loaded");
+
+            configdeliveryMinCount = Config.Bind("Settings", "deliveryMinCount", 10, "The amount of times the minimum ingredient count is multiplied by. MUST BE SMALLER THAN OR EQUAL TO deliveryMaxCount.");
+
+            configdeliveryMaxCount = Config.Bind("Settings", "deliveryMaxCount", 10, "The amount of times the maximum ingredient count is multiplied by.");
+
+            configdeliveryAppearingChance = Config.Bind("Settings", "deliveryAppearingChanceBonus", .5f, "The bonus chance of any given item appearing. 0.5 = +50%.");
 
             this.ApplyPatches();
 
@@ -58,9 +69,9 @@ namespace RoboPhredDev.PotionCraft.BringMoreDamnit
             {
                 foreach (var delivery in category.deliveries)
                 {
-                    delivery.minCount *= 10;
-                    delivery.maxCount *= 10;
-                    delivery.appearingChance = Math.Max(delivery.appearingChance + (delivery.appearingChance * .5f), 1f);
+                    delivery.minCount *= configdeliveryMinCount.Value;
+                    delivery.maxCount *= configdeliveryMaxCount.Value;
+                    delivery.appearingChance = Math.Max(delivery.appearingChance + (delivery.appearingChance * configdeliveryAppearingChance.Value), 1f);
                     count++;
                 }
             }
